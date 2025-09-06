@@ -26,7 +26,6 @@ linters:
     - gosec         # Sicherheitsprüfungen
   
   disable:
-    - typecheck     # Deaktiviert da manchmal problematisch
     - gocritic      # Zu streng für jetzt
     - gocyclo       # Komplexität ignorieren 
     - funlen        # Funktionslänge ignorieren
