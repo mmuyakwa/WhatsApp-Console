@@ -7,7 +7,6 @@ run:
   modules-download-mode: readonly
 
 output:
-  format: colored-line-number
   print-issued-lines: true
   print-linter-name: true
 
@@ -63,7 +62,7 @@ linters-settings:
       - badCond
       - caseOrder
       - dupArg
-      - dupBranch
+      - dupBranchBody
       - dupCase
       - flagDeref
       - regexpMust
