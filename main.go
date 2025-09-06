@@ -46,11 +46,11 @@ func sendSingleMessage(ctx context.Context, client *whatsmeow.Client, recipient,
 	if !strings.Contains(recipient, "@") {
 		if strings.Contains(recipient, "-") && len(recipient) > 15 {
 			// Sieht aus wie eine Gruppen-ID
-			recipient = recipient + "@g.us"
+			recipient += "@g.us"
 		} else {
 			// Normale Telefonnummer
 			recipient = strings.TrimPrefix(recipient, "+")
-			recipient = recipient + "@s.whatsapp.net"
+			recipient += "@s.whatsapp.net"
 		}
 	}
 
@@ -399,14 +399,12 @@ func main() {
 			if !strings.Contains(number, "@") {
 				if strings.Contains(number, "-") && len(number) > 15 {
 					// Sieht aus wie eine Gruppen-ID
-					number = number + "@g.us"
+					number += "@g.us"
 					fmt.Printf("🏘️ Sende an Gruppe: %s\n", number)
 				} else {
 					// Normale Telefonnummer
-					if strings.HasPrefix(number, "+") {
-						number = number[1:] // '+' entfernen
-					}
-					number = number + "@s.whatsapp.net"
+					number = strings.TrimPrefix(number, "+") // '+' entfernen falls vorhanden
+					number += "@s.whatsapp.net"
 					fmt.Printf("👤 Sende an Einzelperson: %s\n", number)
 				}
 			}
