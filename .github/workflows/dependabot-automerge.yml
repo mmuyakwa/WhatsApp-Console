@@ -1,0 +1,85 @@
+name: Dependabot Auto-merge
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+  checks: read
+
+jobs:
+  dependabot-automerge:
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.24'
+        cache: true
+    
+    - name: Dependabot metadata
+      id: metadata
+      uses: dependabot/fetch-metadata@v2
+      with:
+        github-token: "${{ secrets.GITHUB_TOKEN }}"
+    
+    - name: Run tests before auto-merge
+      if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor'
+      run: |
+        echo "🧪 Running basic checks before auto-merge..."
+        
+        # Build check
+        go build -v ./...
+        
+        # Module verification
+        go mod verify
+        
+        # Vet check
+        go vet ./...
+        
+        echo "✅ Basic checks passed, proceeding with auto-merge"
+    
+    - name: Auto-approve Dependabot PRs
+      if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor'
+      run: |
+        gh pr review --approve "$PR_URL"
+      env:
+        PR_URL: ${{ github.event.pull_request.html_url }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Enable auto-merge for Dependabot PRs
+      if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor'
+      run: |
+        gh pr merge --auto --squash "$PR_URL"
+      env:
+        PR_URL: ${{ github.event.pull_request.html_url }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Comment on major version updates
+      if: steps.metadata.outputs.update-type == 'version-update:semver-major'
+      run: |
+        gh pr comment "$PR_URL" --body "🚨 **Major Version Update Detected** 🚨
+        
+        This PR contains major version updates that may include breaking changes.
+        Please review manually before merging.
+        
+        **Updated Dependencies:**
+        - ${{ steps.metadata.outputs.dependency-names }}
+        - Update type: ${{ steps.metadata.outputs.update-type }}
+        
+        **Recommended Actions:**
+        1. Review the changelog for breaking changes
+        2. Test the application thoroughly
+        3. Update any affected code
+        4. Merge manually after validation"
+      env:
+        PR_URL: ${{ github.event.pull_request.html_url }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
