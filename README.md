@@ -350,7 +350,13 @@ git commit -m "Neue Funktion hinzugefügt"
 # Pull Request erstellen
 ```
 
-## 📜 Lizenz
+## � Releases
+
+Für Informationen zum Erstellen neuer Releases, siehe [RELEASE.md](RELEASE.md).
+
+**Aktuelle Version**: Siehe [GitHub Releases](https://github.com/mmuyakwa/WhatsApp-Console/releases)
+
+## �📜 Lizenz
 
 MIT License - Siehe LICENSE Datei für Details.
 
