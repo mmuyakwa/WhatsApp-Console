@@ -33,19 +33,19 @@ Go ermöglicht es, für verschiedene Betriebssysteme und Architekturen zu kompil
 
 ```bash
 # Linux (64-bit)
-GOOS=linux GOARCH=amd64 go build -o whatsapp-console-linux-amd64 ./cmd/main.go
+GOOS=linux GOARCH=amd64 go build -o whatsapp-console-linux-amd64 .
 
 # Windows (64-bit)
-GOOS=windows GOARCH=amd64 go build -o whatsapp-console-windows-amd64.exe ./cmd/main.go
+GOOS=windows GOARCH=amd64 go build -o whatsapp-console-windows-amd64.exe .
 
 # macOS (Intel)
-GOOS=darwin GOARCH=amd64 go build -o whatsapp-console-darwin-amd64 ./cmd/main.go
+GOOS=darwin GOARCH=amd64 go build -o whatsapp-console-darwin-amd64 .
 
 # macOS (Apple Silicon)
-GOOS=darwin GOARCH=arm64 go build -o whatsapp-console-darwin-arm64 ./cmd/main.go
+GOOS=darwin GOARCH=arm64 go build -o whatsapp-console-darwin-arm64 .
 
 # Linux (ARM64) - für Raspberry Pi, etc.
-GOOS=linux GOARCH=arm64 go build -o whatsapp-console-linux-arm64 ./cmd/main.go
+GOOS=linux GOARCH=arm64 go build -o whatsapp-console-linux-arm64 .
 ```
 
 ### **Alle Plattformen auf einmal erstellen**
@@ -68,7 +68,7 @@ for GOOS in linux windows darwin; do
         fi
         
         echo "Kompiliere für $GOOS/$GOARCH..."
-        env GOOS=$GOOS GOARCH=$GOARCH go build -ldflags="-s -w" -o "dist/whatsapp-console-$GOOS-$GOARCH$EXT" ./cmd/main.go
+        env GOOS=$GOOS GOARCH=$GOARCH go build -ldflags="-s -w" -o "dist/whatsapp-console-$GOOS-$GOARCH$EXT" .
     done
 done
 ```
@@ -90,11 +90,11 @@ COPY . .
 
 # Für mehrere Plattformen kompilieren
 RUN mkdir -p /dist && \
-    GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o /dist/whatsapp-console-linux-amd64 ./cmd/main.go && \
-    GOOS=linux GOARCH=arm64 go build -ldflags="-s -w" -o /dist/whatsapp-console-linux-arm64 ./cmd/main.go && \
-    GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o /dist/whatsapp-console-windows-amd64.exe ./cmd/main.go && \
-    GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o /dist/whatsapp-console-darwin-amd64 ./cmd/main.go && \
-    GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o /dist/whatsapp-console-darwin-arm64 ./cmd/main.go
+    GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o /dist/whatsapp-console-linux-amd64 . && \
+    GOOS=linux GOARCH=arm64 go build -ldflags="-s -w" -o /dist/whatsapp-console-linux-arm64 . && \
+    GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o /dist/whatsapp-console-windows-amd64.exe . && \
+    GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o /dist/whatsapp-console-darwin-amd64 . && \
+    GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o /dist/whatsapp-console-darwin-arm64 .
 
 FROM scratch
 COPY --from=builder /dist /dist
@@ -122,10 +122,10 @@ docker run --rm -v $(pwd)/dist:/output whatsapp-console-builder sh -c "cp -r /di
 **🔧 Embedded Systems:**
 ```bash
 # Für Raspberry Pi
-GOOS=linux GOARCH=arm GOARM=7 go build -o whatsapp-console-raspberry ./cmd/main.go
+GOOS=linux GOARCH=arm GOARM=7 go build -o whatsapp-console-raspberry .
 
 # Für andere ARM-Geräte
-GOOS=linux GOARCH=arm64 go build -o whatsapp-console-arm64 ./cmd/main.go
+GOOS=linux GOARCH=arm64 go build -o whatsapp-console-arm64 .
 ```
 
 ## 🎯 Verwendung
