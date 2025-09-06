@@ -1,0 +1,89 @@
+# Konfiguration für golangci-lint
+# Siehe: https://golangci-lint.run/usage/configuration/
+
+run:
+  timeout: 5m
+  tests: true
+  modules-download-mode: readonly
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+
+linters:
+  enable:
+    - errcheck      # Prüft auf unbehandelte Errors
+    - gosimple      # Vereinfacht Code
+    - govet         # Go vet
+    - ineffassign   # Ineffektive Zuweisungen
+    - staticcheck   # Statische Analyse
+    - unused        # Unbenutzte Variablen/Funktionen
+    - misspell      # Rechtschreibfehler
+    - gofmt         # Code-Formatierung
+    - goimports     # Import-Formatierung
+    - gocritic      # Go-Kritiken
+    - gosec         # Sicherheitsprüfungen
+    - unconvert     # Unnötige Typ-Konvertierungen
+    - unparam       # Unbenutzte Parameter
+    - gocyclo       # Zyklomatische Komplexität
+    - funlen        # Funktionslänge
+    - gocognit      # Kognitive Komplexität
+    - nestif        # Verschachtelte if-Anweisungen
+    - lll           # Zeilenlänge
+    - whitespace    # Leerzeichen-Probleme
+  
+  disable:
+    - typecheck     # Deaktiviert da manchmal problematisch
+
+linters-settings:
+  gocyclo:
+    min-complexity: 15
+  
+  funlen:
+    lines: 80
+    statements: 50
+  
+  gocognit:
+    min-complexity: 15
+  
+  lll:
+    line-length: 120
+  
+  nestif:
+    min-complexity: 4
+  
+  gosec:
+    excludes:
+      - G104 # Audit errors not checked (manchmal OK)
+  
+  gocritic:
+    enabled-checks:
+      - argOrder
+      - badCond
+      - caseOrder
+      - dupArg
+      - dupBranch
+      - dupCase
+      - flagDeref
+      - regexpMust
+      - singleCaseSwitch
+      - typeSwitchVar
+      - underef
+      - unlambda
+
+issues:
+  exclude-rules:
+    # Erlaube lange Zeilen in Tests
+    - path: _test\.go
+      linters:
+        - lll
+        - funlen
+    
+    # Erlaube unbehandelte Errors in main.go (für CLI-Apps oft OK)
+    - path: main\.go
+      linters:
+        - errcheck
+  
+  max-issues-per-linter: 0
+  max-same-issues: 0

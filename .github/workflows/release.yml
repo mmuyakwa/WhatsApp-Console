@@ -1,0 +1,95 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: 1.24.x
+    
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+    
+    - name: Run tests
+      run: go test ./...
+    
+    - name: Build for multiple platforms
+      run: |
+        mkdir -p dist
+        
+        # Linux amd64
+        GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X main.version=${{ github.ref_name }} -X main.commit=${{ github.sha }} -X main.date=$(date -u +%Y-%m-%dT%H:%M:%SZ)" -o dist/whatsapp-console-linux-amd64 .
+        
+        # Linux arm64
+        GOOS=linux GOARCH=arm64 go build -ldflags="-s -w" -o dist/whatsapp-console-linux-arm64 .
+        
+        # Windows amd64
+        GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o dist/whatsapp-console-windows-amd64.exe .
+        
+        # macOS amd64
+        GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o dist/whatsapp-console-darwin-amd64 .
+        
+        # macOS arm64 (Apple Silicon)
+        GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o dist/whatsapp-console-darwin-arm64 .
+    
+    - name: Generate changelog
+      id: changelog
+      run: |
+        if [ -f CHANGELOG.md ]; then
+          echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+          cat CHANGELOG.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        else
+          echo "CHANGELOG=Siehe Commit-Historie für Details." >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        body: |
+          ## WhatsApp Console ${{ github.ref_name }}
+          
+          ### Downloads
+          - **Linux (amd64)**: `whatsapp-console-linux-amd64`
+          - **Linux (arm64)**: `whatsapp-console-linux-arm64`
+          - **Windows (amd64)**: `whatsapp-console-windows-amd64.exe`
+          - **macOS (Intel)**: `whatsapp-console-darwin-amd64`
+          - **macOS (Apple Silicon)**: `whatsapp-console-darwin-arm64`
+          
+          ### Änderungen
+          ${{ steps.changelog.outputs.CHANGELOG }}
+          
+          ### Installation
+          1. Lade die entsprechende Datei für dein System herunter
+          2. Mache sie ausführbar: `chmod +x whatsapp-console-*` (Linux/macOS)
+          3. Starte die Anwendung: `./whatsapp-console-*`
+        files: |
+          dist/whatsapp-console-linux-amd64
+          dist/whatsapp-console-linux-arm64
+          dist/whatsapp-console-windows-amd64.exe
+          dist/whatsapp-console-darwin-amd64
+          dist/whatsapp-console-darwin-arm64
+        draft: false
+        prerelease: false

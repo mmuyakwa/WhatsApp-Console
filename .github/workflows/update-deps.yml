@@ -1,0 +1,84 @@
+name: Update Dependencies
+
+on:
+  schedule:
+    # Läuft jeden ersten Tag des Monats um 6 Uhr UTC
+    - cron: '0 6 1 * *'
+  workflow_dispatch: # Ermöglicht manuellen Start
+
+jobs:
+  update-deps:
+    name: Update Go Dependencies
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: 1.24.x
+    
+    - name: Update dependencies
+      run: |
+        go get -u ./...
+        go mod tidy
+    
+    - name: Run tests
+      run: go test ./...
+    
+    - name: Check for changes
+      id: verify-changed-files
+      run: |
+        if [ -n "$(git status --porcelain)" ]; then
+          echo "changed=true" >> $GITHUB_OUTPUT
+        else
+          echo "changed=false" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Create Pull Request
+      if: steps.verify-changed-files.outputs.changed == 'true'
+      uses: peter-evans/create-pull-request@v5
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: 'chore: update Go dependencies'
+        title: 'chore: update Go dependencies'
+        body: |
+          ## Dependency Updates
+          
+          Dieser PR aktualisiert die Go-Dependencies auf die neuesten Versionen.
+          
+          ### Änderungen:
+          - Automatische Aktualisierung aller Go-Module
+          - `go mod tidy` wurde ausgeführt
+          - Tests wurden erfolgreich ausgeführt
+          
+          ### Überprüfung:
+          Bitte überprüfe die Änderungen und teste die Anwendung vor dem Merge.
+        branch: chore/update-dependencies
+        delete-branch: true
+    
+    - name: Build for multiple platforms
+      run: |
+        mkdir -p dist
+        
+        # Linux amd64
+        GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X main.version=${{ github.ref_name }} -X main.commit=${{ github.sha }} -X main.date=$(date -u +%Y-%m-%dT%H:%M:%SZ)" -o dist/whatsapp-console-linux-amd64 .
+        
+        # Linux arm64
+        GOOS=linux GOARCH=arm64 go build -ldflags="-s -w -X main.version=${{ github.ref_name }} -X main.commit=${{ github.sha }} -X main.date=$(date -u +%Y-%m-%dT%H:%M:%SZ)" -o dist/whatsapp-console-linux-arm64 .
+        
+        # Darwin amd64
+        GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w -X main.version=${{ github.ref_name }} -X main.commit=${{ github.sha }} -X main.date=$(date -u +%Y-%m-%dT%H:%M:%SZ)" -o dist/whatsapp-console-darwin-amd64 .
+        
+        # Darwin arm64
+        GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w -X main.version=${{ github.ref_name }} -X main.commit=${{ github.sha }} -X main.date=$(date -u +%Y-%m-%dT%H:%M:%SZ)" -o dist/whatsapp-console-darwin-arm64 .
+        
+        # Windows amd64
+        GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -X main.version=${{ github.ref_name }} -X main.commit=${{ github.sha }} -X main.date=$(date -u +%Y-%m-%dT%H:%M:%SZ)" -o dist/whatsapp-console-windows-amd64.exe
+        
+        # Windows arm64
+        GOOS=windows GOARCH=arm64 go build -ldflags="-s -w -X main.version=${{ github.ref_name }} -X main.commit=${{ github.sha }} -X main.date=$(date -u +%Y-%m-%dT%H:%M:%SZ)" -o dist/whatsapp-console-windows-arm64.exe

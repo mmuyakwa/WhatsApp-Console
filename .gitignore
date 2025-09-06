@@ -1,0 +1,75 @@
+# Kompilierte Binärdateien
+whatsapp-console
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Datenbank-Dateien
+*.db
+*.sqlite
+*.sqlite3
+whatsapp.db
+
+# Test-Binärdateien
+*.test
+
+# Output der Go Coverage Tools
+*.out
+
+# Dependency Directories (optional)
+vendor/
+
+# Go workspace Dateien
+go.work
+go.work.sum
+
+# IDE/Editor Dateien
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS spezifische Dateien
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+# Dateien die möglicherweise auf Volumes erscheinen
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Log Dateien
+*.log
+
+# Temporäre Dateien
+tmp/
+temp/
+*.tmp
+
+# Konfigurationsdateien mit sensiblen Daten (falls vorhanden)
+# config.local.yaml
+# .env
+# .env.local
+
+# Build Verzeichnisse
+build/
+dist/
+bin/
