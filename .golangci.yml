@@ -1,7 +1,7 @@
-# Minimale golangci-lint Konfiguration für v2.x Kompatibilität
+# Minimale golangci-lint v2.x Konfiguration
 # Siehe: https://golangci-lint.run/usage/configuration/
 
-version: "1"
+version: 2
 
 run:
   timeout: 5m
