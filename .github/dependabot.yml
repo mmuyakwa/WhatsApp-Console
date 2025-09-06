@@ -16,10 +16,9 @@ updates:
       prefix: "deps"
       include: "scope"
     labels:
-      - "dependencies"
-      - "go"
+      - "enhancement"  # Standard GitHub Label
     
-  # GitHub Actions
+  # GitHub Actions  
   - package-ecosystem: "github-actions"
     directory: "/.github/workflows"
     schedule:
@@ -35,5 +34,4 @@ updates:
       prefix: "ci"
       include: "scope"
     labels:
-      - "dependencies"
-      - "github-actions"
+      - "enhancement"  # Standard GitHub Label
