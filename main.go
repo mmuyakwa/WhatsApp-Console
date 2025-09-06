@@ -125,7 +125,7 @@ func main() {
 
 	// CLI-Variablen vorbereiten
 	var recipient, message string
-	var isCliMode bool = len(args) >= 1
+	var isCliMode = len(args) >= 1
 	var cliCommand string
 
 	if len(args) >= 1 {
