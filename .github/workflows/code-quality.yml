@@ -23,11 +23,19 @@ jobs:
     - name: Cache Go modules
       uses: actions/cache@v4
       with:
-        path: ~/go/pkg/mod
-        key: ${{ runner.os }}-go-quality-${{ hashFiles('**/go.sum') }}
+        path: |
+          ~/go/pkg/mod
+          ~/.cache/go-build
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}-${{ hashFiles('**/*.go') }}
         restore-keys: |
-          ${{ runner.os }}-go-quality-
+          ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}-
           ${{ runner.os }}-go-
+    
+    - name: Clean cache if restoration failed
+      run: |
+        if [ -d ~/go/pkg/mod ] && [ ! -w ~/go/pkg/mod ]; then
+          rm -rf ~/go/pkg/mod
+        fi
     
     - name: Download dependencies
       run: go mod download
@@ -44,7 +52,7 @@ jobs:
       uses: golangci/golangci-lint-action@v8
       with:
         version: latest
-        args: --timeout=5m
+        args: --timeout=5m --config=.golangci.yml
     
     - name: Run staticcheck
       run: staticcheck ./...
