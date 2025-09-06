@@ -40,7 +40,7 @@ jobs:
         mkdir -p dist
         
         # Linux amd64
-        GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X main.version=${{ github.ref_name }} -X main.commit=${{ github.sha }} -X main.date=$(date -u +%Y-%m-%dT%H:%M:%SZ)" -o dist/whatsapp-console-linux-amd64 .
+        GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o dist/whatsapp-console-linux-amd64 .
         
         # Linux arm64
         GOOS=linux GOARCH=arm64 go build -ldflags="-s -w" -o dist/whatsapp-console-linux-arm64 .
