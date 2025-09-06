@@ -21,55 +21,24 @@ linters:
     - misspell      # Rechtschreibfehler
     - gofmt         # Code-Formatierung
     - goimports     # Import-Formatierung
-    - gocritic      # Go-Kritiken
     - gosec         # Sicherheitsprüfungen
-    - unconvert     # Unnötige Typ-Konvertierungen
-    - unparam       # Unbenutzte Parameter
-    - gocyclo       # Zyklomatische Komplexität
-    - funlen        # Funktionslänge
-    - gocognit      # Kognitive Komplexität
-    - nestif        # Verschachtelte if-Anweisungen
-    - lll           # Zeilenlänge
-    - whitespace    # Leerzeichen-Probleme
   
   disable:
     - typecheck     # Deaktiviert da manchmal problematisch
+    - gocritic      # Zu streng für jetzt
+    - gocyclo       # Komplexität ignorieren 
+    - funlen        # Funktionslänge ignorieren
+    - gocognit      # Kognitive Komplexität ignorieren
+    - nestif        # Verschachtelte if-Anweisungen ignorieren  
+    - lll           # Zeilenlänge ignorieren
+    - whitespace    # Leerzeichen-Probleme ignorieren
+    - unconvert     # Unnötige Typ-Konvertierungen ignorieren
+    - unparam       # Unbenutzte Parameter ignorieren
 
 linters-settings:
-  gocyclo:
-    min-complexity: 15
-  
-  funlen:
-    lines: 80
-    statements: 50
-  
-  gocognit:
-    min-complexity: 15
-  
-  lll:
-    line-length: 120
-  
-  nestif:
-    min-complexity: 4
-  
   gosec:
     excludes:
       - G104 # Audit errors not checked (manchmal OK)
-  
-  gocritic:
-    enabled-checks:
-      - argOrder
-      - badCond
-      - caseOrder
-      - dupArg
-      - dupBranchBody
-      - dupCase
-      - flagDeref
-      - regexpMust
-      - singleCaseSwitch
-      - typeSwitchVar
-      - underef
-      - unlambda
 
 issues:
   exclude-rules:

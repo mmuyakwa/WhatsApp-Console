@@ -12,7 +12,7 @@ import (
 
 	"github.com/mdp/qrterminal/v3"
 	"go.mau.fi/whatsmeow"
-	waProto "go.mau.fi/whatsmeow/binary/proto"
+	"go.mau.fi/whatsmeow/proto/waE2E"
 	"go.mau.fi/whatsmeow/store/sqlstore"
 	"go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
@@ -34,7 +34,7 @@ func eventHandler(evt interface{}) {
 			fmt.Printf("📱 Nachricht von %s: %s\n", v.Info.Sender, v.Message.GetConversation())
 		}
 	case *events.Receipt:
-		if v.Type == events.ReceiptTypeRead || v.Type == events.ReceiptTypeReadSelf {
+		if v.Type == types.ReceiptTypeRead || v.Type == types.ReceiptTypeReadSelf {
 			fmt.Printf("✓ Nachricht gelesen von %s\n", v.SourceString())
 		}
 	}
@@ -61,7 +61,7 @@ func sendSingleMessage(ctx context.Context, client *whatsmeow.Client, recipient,
 	}
 
 	// Nachricht senden
-	_, err = client.SendMessage(ctx, jid, &waProto.Message{
+	_, err = client.SendMessage(ctx, jid, &waE2E.Message{
 		Conversation: &message,
 	})
 
@@ -419,7 +419,7 @@ func main() {
 			}
 
 			// Nachricht senden
-			_, err = client.SendMessage(ctx, recipient, &waProto.Message{
+			_, err = client.SendMessage(ctx, recipient, &waE2E.Message{
 				Conversation: &message,
 			})
 
