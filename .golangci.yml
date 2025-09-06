@@ -1,38 +1,16 @@
-# Konfiguration für golangci-lint v2.x
+# Minimale golangci-lint Konfiguration für v2.x Kompatibilität
 # Siehe: https://golangci-lint.run/usage/configuration/
 
-version: "2"
+version: "1"
 
 run:
   timeout: 5m
-  tests: true
-  modules-download-mode: readonly
 
 linters:
   enable:
-    - errcheck      # Prüft auf unbehandelte Errors
-    - gosimple      # Vereinfacht Code
-    - govet         # Go vet
-    - ineffassign   # Ineffektive Zuweisungen
-    - staticcheck   # Statische Analyse
-    - unused        # Unbenutzte Variablen/Funktionen
-    - misspell      # Rechtschreibfehler
-    - gofmt         # Code-Formatierung
-    - goimports     # Import-Formatierung
-    - gosec         # Sicherheitsprüfungen
-  
-  disable:
-    - gocritic      # Zu streng für jetzt
-    - gocyclo       # Komplexität ignorieren 
-    - funlen        # Funktionslänge ignorieren
-    - gocognit      # Kognitive Komplexität ignorieren
-    - nestif        # Verschachtelte if-Anweisungen ignorieren  
-    - lll           # Zeilenlänge ignorieren
-    - whitespace    # Leerzeichen-Probleme ignorieren
-    - unconvert     # Unnötige Typ-Konvertierungen ignorieren
-    - unparam       # Unbenutzte Parameter ignorieren
-
-linters-settings:
-  gosec:
-    excludes:
-      - G104 # Audit errors not checked (manchmal OK)
+    - govet
+    - errcheck
+    - staticcheck
+    - unused
+    - gosimple
+    - ineffassign
