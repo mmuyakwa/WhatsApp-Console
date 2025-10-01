@@ -276,7 +276,7 @@ func main() {
 
 			if showGroups {
 				// Lade Gruppen
-				groups, err := client.GetJoinedGroups(ctx)
+				groups, err := client.GetJoinedGroups()
 				if err != nil {
 					fmt.Printf("❌ Fehler beim Laden der Gruppen: %v\n", err)
 					os.Exit(1)
@@ -437,9 +437,8 @@ func main() {
 			showGroups := len(parts) > 1 && strings.ToLower(parts[1]) == "groups"
 
 			if showGroups {
-				fmt.Println("🏘️ Lade Gruppen-Liste...")
 				// Lade Gruppen
-				groups, err := client.GetJoinedGroups(ctx)
+				groups, err := client.GetJoinedGroups()
 				if err != nil {
 					fmt.Printf("❌ Fehler beim Laden der Gruppen: %v\n", err)
 					continue
