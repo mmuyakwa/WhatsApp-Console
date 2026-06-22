@@ -3,7 +3,7 @@ module whatsapp-console
 go 1.24.0
 
 require (
-	github.com/mattn/go-sqlite3 v1.14.45
+	github.com/mattn/go-sqlite3 v1.14.47
 	github.com/mdp/qrterminal/v3 v3.2.1
 	go.mau.fi/whatsmeow v0.0.0-20250829123043-72d2ed58e998
 )
