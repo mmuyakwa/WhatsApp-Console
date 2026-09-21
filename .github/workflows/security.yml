@@ -45,7 +45,7 @@ jobs:
       run: |
         # Install gosec using go install (more reliable)
         echo "🔧 Installing gosec..."
-        go install github.com/securego/gosec/v2/cmd/gosec@latest
+        go install github.com/securego/gosec/v2/cmd/gosec@v2.29.0
         
         # Verify installation
         if ! $(go env GOPATH)/bin/gosec --help > /dev/null 2>&1; then
