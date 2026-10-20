@@ -13,6 +13,7 @@ import (
 	"github.com/mdp/qrterminal/v3"
 	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/proto/waE2E"
+	"go.mau.fi/whatsmeow/store"
 	"go.mau.fi/whatsmeow/store/sqlstore"
 	"go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
@@ -84,6 +85,18 @@ func getLogLevel() string {
 		return "DEBUG"
 	}
 	return "WARN" // Weniger verbose für normale Nutzung
+}
+
+// waitConnected pollt, da WaitForConnection nach dem Pairing (erwarteter Reconnect) sofort false liefert
+func waitConnected(client *whatsmeow.Client, timeout time.Duration) bool {
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		if client.IsConnected() && client.IsLoggedIn() {
+			return true
+		}
+		time.Sleep(200 * time.Millisecond)
+	}
+	return false
 }
 
 func main() {
@@ -160,8 +173,21 @@ func main() {
 
 	// Client Logger
 	clientLog := waLog.Stdout("Client", getLogLevel(), true)
-	client := whatsmeow.NewClient(deviceStore, clientLog)
-	client.AddEventHandler(eventHandler)
+	loggedOut := make(chan struct{}, 1)
+	newClient := func(ds *store.Device) *whatsmeow.Client {
+		c := whatsmeow.NewClient(ds, clientLog)
+		c.AddEventHandler(eventHandler)
+		c.AddEventHandler(func(evt interface{}) {
+			if _, ok := evt.(*events.LoggedOut); ok {
+				select {
+				case loggedOut <- struct{}{}:
+				default:
+				}
+			}
+		})
+		return c
+	}
+	client := newClient(deviceStore)
 
 	// Signal Handler für sauberes Beenden
 	c := make(chan os.Signal, 1)
@@ -188,46 +214,8 @@ func main() {
 		os.Exit(0)
 	}()
 
-	// QR Code handling wenn nicht eingeloggt
-	if client.Store.ID == nil {
-		if len(args) >= 3 && args[0] == "send" {
-			fmt.Println("❌ Erstes Login erforderlich!")
-			fmt.Println("💡 Führen Sie zuerst './whatsapp-console' aus um QR-Code zu scannen")
-			os.Exit(1)
-		}
-
-		fmt.Println("📱 Erstes Login erforderlich!")
-		qrChan, _ := client.GetQRChannel(ctx)
-		err = client.Connect()
-		if err != nil {
-			fmt.Printf("❌ Verbindungsfehler: %v\n", err)
-			return
-		}
-
-		fmt.Println("📷 Scannen Sie den QR-Code mit WhatsApp:")
-		fmt.Println()
-		for evt := range qrChan {
-			if evt.Event == "code" {
-				// QR-Code im Terminal anzeigen
-				qrterminal.GenerateHalfBlock(evt.Code, qrterminal.L, os.Stdout)
-				fmt.Println()
-				fmt.Println("💡 QR-Code wurde auch als 'qr.png' gespeichert")
-
-				// QR-Code auch als PNG-Datei speichern (optional)
-				// Sie können diesen Code auskommentieren wenn gewünscht
-				/*
-					err := qrcode.WriteFile(evt.Code, qrcode.Medium, 256, "qr.png")
-					if err == nil {
-						fmt.Println("📁 QR-Code gespeichert als qr.png")
-					}
-				*/
-
-				fmt.Println("🔗 QR-Code Text:", evt.Code)
-			} else {
-				fmt.Printf("QR Event: %s\n", evt.Event)
-			}
-		}
-	} else {
+	needsLogin := client.Store.ID == nil
+	if !needsLogin {
 		// Bereits eingeloggt, nur verbinden
 		if len(args) < 3 || args[0] != "send" {
 			fmt.Println("🔗 Verbinde mit WhatsApp...")
@@ -237,15 +225,77 @@ func main() {
 			fmt.Printf("❌ Verbindungsfehler: %v\n", err)
 			return
 		}
+		if !isCliMode {
+			fmt.Println("⏳ Warte auf Verbindung...")
+		}
+
+		connected := make(chan bool, 1)
+		go func() { connected <- waitConnected(client, 15*time.Second) }()
+		select {
+		case ok := <-connected:
+			if !ok {
+				select {
+				case <-loggedOut:
+					needsLogin = true
+				case <-time.After(1 * time.Second):
+				}
+			}
+			if !ok && !needsLogin {
+				fmt.Println("❌ Timeout beim Verbinden")
+				return
+			}
+		case <-loggedOut:
+			needsLogin = true
+		}
+
+		if needsLogin {
+			fmt.Println("⚠️ Session ungültig (von WhatsApp abgemeldet). Neuer Login mit QR-Code erforderlich.")
+			client.Disconnect()
+			if err := deviceStore.Delete(ctx); err != nil {
+				fmt.Printf("⚠️ Alte Session konnte nicht gelöscht werden: %v\n", err)
+			}
+			deviceStore = container.NewDevice()
+			client = newClient(deviceStore)
+		}
 	}
 
-	// Warten bis verbunden
-	if !isCliMode {
-		fmt.Println("⏳ Warte auf Verbindung...")
-	}
-	if !client.WaitForConnection(10 * time.Second) {
-		fmt.Println("❌ Timeout beim Verbinden")
-		return
+	if needsLogin {
+		fmt.Println("📱 Login erforderlich!")
+		qrChan, err := client.GetQRChannel(ctx)
+		if err != nil {
+			fmt.Printf("❌ QR-Kanal Fehler: %v\n", err)
+			return
+		}
+		err = client.Connect()
+		if err != nil {
+			fmt.Printf("❌ Verbindungsfehler: %v\n", err)
+			return
+		}
+
+		fmt.Println("📷 Scannen Sie den QR-Code mit WhatsApp:")
+		fmt.Println()
+		paired := false
+		for evt := range qrChan {
+			switch evt.Event {
+			case "code":
+				qrterminal.GenerateHalfBlock(evt.Code, qrterminal.L, os.Stdout)
+				fmt.Println()
+				fmt.Println("🔗 QR-Code Text:", evt.Code)
+			case "success":
+				paired = true
+			default:
+				fmt.Printf("QR Event: %s\n", evt.Event)
+			}
+		}
+		if !paired {
+			fmt.Println("❌ Login fehlgeschlagen. Bitte erneut starten.")
+			return
+		}
+		fmt.Println("✅ QR-Code akzeptiert, verbinde...")
+		if !waitConnected(client, 60*time.Second) {
+			fmt.Println("❌ Timeout beim Verbinden")
+			return
+		}
 	}
 
 	if !isCliMode {
@@ -276,7 +326,7 @@ func main() {
 
 			if showGroups {
 				// Lade Gruppen
-				groups, err := client.GetJoinedGroups()
+				groups, err := client.GetJoinedGroups(ctx)
 				if err != nil {
 					fmt.Printf("❌ Fehler beim Laden der Gruppen: %v\n", err)
 					os.Exit(1)
@@ -438,7 +488,7 @@ func main() {
 
 			if showGroups {
 				// Lade Gruppen
-				groups, err := client.GetJoinedGroups()
+				groups, err := client.GetJoinedGroups(ctx)
 				if err != nil {
 					fmt.Printf("❌ Fehler beim Laden der Gruppen: %v\n", err)
 					continue
