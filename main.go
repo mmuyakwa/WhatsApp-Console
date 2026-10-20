@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -77,6 +78,28 @@ func sendSingleMessage(ctx context.Context, client *whatsmeow.Client, recipient,
 	}
 
 	return nil
+}
+
+// quietDisconnect wird beim bewussten Beenden gesetzt, damit erwartete Abbruch-Meldungen nicht verwirren
+var quietDisconnect atomic.Bool
+
+type quietLogger struct{ waLog.Logger }
+
+func (l quietLogger) muted() bool {
+	return quietDisconnect.Load() && os.Getenv("WHATSAPP_DEBUG") != "1"
+}
+func (l quietLogger) Warnf(msg string, args ...any) {
+	if !l.muted() {
+		l.Logger.Warnf(msg, args...)
+	}
+}
+func (l quietLogger) Errorf(msg string, args ...any) {
+	if !l.muted() {
+		l.Logger.Errorf(msg, args...)
+	}
+}
+func (l quietLogger) Sub(module string) waLog.Logger {
+	return quietLogger{l.Logger.Sub(module)}
 }
 
 // Optional: Debug-Modus aus Environment-Variable
@@ -172,7 +195,7 @@ func main() {
 	}
 
 	// Client Logger
-	clientLog := waLog.Stdout("Client", getLogLevel(), true)
+	clientLog := quietLogger{waLog.Stdout("Client", getLogLevel(), true)}
 	loggedOut := make(chan struct{}, 1)
 	newClient := func(ds *store.Device) *whatsmeow.Client {
 		c := whatsmeow.NewClient(ds, clientLog)
@@ -308,6 +331,11 @@ func main() {
 		case "send":
 			if len(args) >= 3 {
 				err = sendSingleMessage(ctx, client, recipient, message)
+				if err == nil {
+					// Kurz warten, damit Hintergrundaufgaben (z.B. Privacy-Token) vor dem Trennen fertig werden
+					time.Sleep(2 * time.Second)
+				}
+				quietDisconnect.Store(true)
 				client.Disconnect()
 				if err != nil {
 					fmt.Printf("❌ %v\n", err)
