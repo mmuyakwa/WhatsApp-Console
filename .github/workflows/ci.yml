@@ -10,9 +10,6 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        go-version: [1.26.x]
     
     steps:
     - name: Checkout code
@@ -21,15 +18,14 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v7
       with:
-        go-version: ${{ matrix.go-version }}
+        go-version: stable
     
     - name: Cache Go modules
       uses: actions/cache@v6
       with:
         path: ~/go/pkg/mod
-        key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('**/go.sum') }}
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
         restore-keys: |
-          ${{ runner.os }}-go-${{ matrix.go-version }}-
           ${{ runner.os }}-go-
     
     - name: Download dependencies
@@ -74,7 +70,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v7
       with:
-        go-version: 1.24.x
+        go-version: stable
     
     - name: Cache Go modules
       uses: actions/cache@v6
